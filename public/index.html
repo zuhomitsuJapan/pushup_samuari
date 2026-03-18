@@ -1,10 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-  <title>Pushup App</title>
+  <meta charset="UTF-8" />
+  <title>Pushup Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #ff6b00;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    input {
+      width: 200px;
+    }
+
+    button {
+      background: #ff6b00;
+      color: white;
+      cursor: pointer;
+    }
+
+    .card {
+      background: #1e1e1e;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 10px;
+    }
+
+    .leaderboard {
+      margin-top: 20px;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>🔥 Pushup Tracker läuft!</h1>
-  <p>Wenn du das siehst, funktioniert alles 🎉</p>
+
+  <h1>🔥 Pushup Tracker</h1>
+
+  <div id="login">
+    <input id="username" placeholder="Name" />
+    <input id="team" placeholder="Team Code" />
+    <br>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div id="app" style="display:none;">
+    <h2 id="welcome"></h2>
+
+    <div class="card">
+      <input id="pushups" type="number" placeholder="Pushups eingeben" />
+      <button onclick="addPushups()">Speichern</button>
+    </div>
+
+    <div class="card">
+      <h3>🏆 Leaderboard</h3>
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+
+  <script>
+    let user = null;
+
+    function login() {
+      const username = document.getElementById("username").value;
+      const team = document.getElementById("team").value;
+
+      if (!username || !team) {
+        alert("Bitte alles ausfüllen");
+        return;
+      }
+
+      user = { username, team };
+      localStorage.setItem("user", JSON.stringify(user));
+
+      document.getElementById("login").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      document.getElementById("welcome").innerText = "Hi " + username;
+
+      loadLeaderboard();
+    }
+
+    function addPushups() {
+      const amount = parseInt(document.getElementById("pushups").value);
+
+      if (!amount) return;
+
+      let data = JSON.parse(localStorage.getItem("data") || "{}");
+
+      if (!data[user.team]) data[user.team] = {};
+      if (!data[user.team][user.username]) data[user.team][user.username] = 0;
+
+      data[user.team][user.username] += amount;
+
+      localStorage.setItem("data", JSON.stringify(data));
+
+      document.getElementById("pushups").value = "";
+      loadLeaderboard();
+    }
+
+    function loadLeaderboard() {
+      let data = JSON.parse(localStorage.getItem("data") || "{}");
+
+      let teamData = data[user.team] || {};
+
+      let sorted = Object.entries(teamData).sort((a, b) => b[1] - a[1]);
+
+      let html = "";
+
+      sorted.forEach((entry, index) => {
+        html += `<p>${index + 1}. ${entry[0]} - ${entry[1]} Pushups</p>`;
+      });
+
+      document.getElementById("leaderboard").innerHTML = html;
+    }
+
+    // Auto Login
+    const saved = localStorage.getItem("user");
+    if (saved) {
+      user = JSON.parse(saved);
+      document.getElementById("login").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      document.getElementById("welcome").innerText = "Hi " + user.username;
+      loadLeaderboard();
+    }
+  </script>
+
 </body>
 </html>
