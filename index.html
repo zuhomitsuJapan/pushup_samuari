@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PushUp Live</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0b1220" />
+  <style>
+    :root {
+      --bg: #08101d;
+      --panel: rgba(16, 24, 40, .82);
+      --panel-2: rgba(11, 18, 32, .88);
+      --line: rgba(148,163,184,.18);
+      --text: #ecf3ff;
+      --muted: #9fb0cb;
+      --accent: #58f0a7;
+      --accent-2: #6ec8ff;
+      --danger: #ff7d8f;
+      --shadow: 0 24px 80px rgba(0,0,0,.35);
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; color: var(--text); font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(88,240,167,.12), transparent 25%),
+        radial-gradient(circle at top right, rgba(110,200,255,.12), transparent 30%),
+        linear-gradient(180deg, #0b1220, #08101d 55%);
+      min-height: 100vh;
+    }
+    .app { max-width: 1100px; margin: 0 auto; padding: 18px 14px 40px; }
+    .hero, .card { background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(16px); box-shadow: var(--shadow); border-radius: var(--radius); }
+    .hero { padding: 20px; margin-bottom: 16px; }
+    .hero-top { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .title { font-size: 30px; font-weight: 800; letter-spacing: -.03em; margin: 0; }
+    .subtitle { color: var(--muted); margin: 6px 0 0; }
+    .badge, .chip { border: 1px solid var(--line); background: rgba(255,255,255,.04); border-radius: 999px; padding: 9px 12px; color: var(--muted); }
+    .grid { display:grid; gap: 14px; }
+    .grid.two { grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); }
+    .grid.three { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .card { padding: 18px; }
+    h2, h3, p { margin-top: 0; }
+    .section-title { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    input, button, select {
+      width: 100%; border-radius: 18px; border: 1px solid var(--line); background: rgba(8,16,29,.72);
+      color: var(--text); padding: 14px 16px; font-size: 15px; outline: none;
+    }
+    input::placeholder { color: #7386a3; }
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #07131d; font-weight: 800; cursor: pointer;
+      border: none; box-shadow: 0 12px 30px rgba(88,240,167,.18);
+    }
+    button.secondary { background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--line); box-shadow:none; }
+    button.ghost { background: transparent; border: 1px dashed var(--line); color: var(--muted); box-shadow:none; }
+    button.danger { background: linear-gradient(135deg, #ff8899, #ffc08a); color: #271216; }
+    .stack > * + * { margin-top: 10px; }
+    .hidden { display: none !important; }
+    .stats { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .stat { background: var(--panel-2); border:1px solid var(--line); border-radius: 20px; padding: 14px; }
+    .stat .big { font-size: 28px; font-weight: 800; margin: 8px 0 0; }
+    .muted { color: var(--muted); }
+    .error { color: var(--danger); min-height: 22px; }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; }
+    .toolbar > * { flex:1; min-width: 160px; }
+    .progress-wrap { display:grid; gap: 12px; }
+    .progress-row { background: var(--panel-2); border:1px solid var(--line); border-radius: 20px; padding: 12px; }
+    .progress-head { display:flex; justify-content:space-between; gap:10px; margin-bottom: 10px; }
+    .progress { height: 12px; background: rgba(255,255,255,.05); border-radius: 999px; overflow: hidden; }
+    .bar { height:100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+    .leader { display:grid; gap: 10px; }
+    .leader-row { display:grid; grid-template-columns: 50px 1.2fr repeat(4, .8fr); gap: 10px; align-items:center; background: var(--panel-2); border:1px solid var(--line); border-radius: 20px; padding: 12px; }
+    .rank { width: 36px; height: 36px; display:grid; place-items:center; border-radius: 999px; background: rgba(255,255,255,.06); font-weight: 800; }
+    .entries { display:grid; gap: 10px; }
+    .entry { border: 1px solid var(--line); background: var(--panel-2); border-radius: 20px; padding: 14px; display:flex; justify-content:space-between; gap:12px; }
+    .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(120px); background: rgba(8,16,29,.96); color: var(--text); border:1px solid var(--line); padding: 14px 18px; border-radius: 16px; transition: .25s ease; z-index: 20; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .pill-row { display:flex; gap:10px; flex-wrap:wrap; margin-top: 14px; }
+    .oauths { display:grid; gap:10px; }
+    .small { font-size: 13px; }
+    @media (max-width: 760px) {
+      .title { font-size: 26px; }
+      .leader-row { grid-template-columns: 42px 1fr 1fr; }
+      .leader-row .hide-sm { display:none; }
+      .entry { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <h1 class="title">PushUp Live</h1>
+          <p class="subtitle">Live Sync, Streaks, privates Leaderboard und mobile Fitness-App Look.</p>
+        </div>
+        <div id="userBadge" class="badge hidden"></div>
+      </div>
+      <div class="pill-row">
+        <div class="chip" id="teamMeta">Nicht eingeloggt</div>
+        <div class="chip" id="syncMeta">Live Sync bereit</div>
+        <div class="chip" id="pushMeta">Push optional</div>
+      </div>
+    </div>
+
+    <div id="authView" class="grid two">
+      <div class="card stack">
+        <div class="section-title"><h2>Login</h2><span class="muted small">lokal oder Google</span></div>
+        <input id="loginUsername" placeholder="Benutzername" />
+        <input id="loginPassword" type="password" placeholder="Passwort" />
+        <button onclick="login()">Einloggen</button>
+        <div class="oauths">
+          <button class="secondary hidden" id="googleBtn" onclick="window.location.href='/auth/google'">Mit Google anmelden</button>
+                  </div>
+        <div id="loginError" class="error"></div>
+      </div>
+
+      <div class="card stack">
+        <div class="section-title"><h2>Registrieren</h2><span class="muted small">Team mit Freund teilen</span></div>
+        <input id="regUsername" placeholder="Benutzername" />
+        <input id="regPassword" type="password" placeholder="Passwort" />
+        <input id="regTeamName" placeholder="Teamname (nur bei neuem Team)" />
+        <input id="regTeamCode" placeholder="Team-Code (leer = neues privates Team)" />
+        <button onclick="registerUser()">Account erstellen</button>
+        <div class="muted small">Standardmäßig ist das Leaderboard privat und nur innerhalb eures Team-Codes sichtbar.</div>
+        <div id="regError" class="error"></div>
+      </div>
+    </div>
+
+    <div id="appView" class="hidden grid">
+      <div class="stats">
+        <div class="stat"><div class="muted small">Heute</div><div class="big" id="todayStat">0</div></div>
+        <div class="stat"><div class="muted small">Diese Woche</div><div class="big" id="weekStat">0</div></div>
+        <div class="stat"><div class="muted small">Streak</div><div class="big" id="streakStat">0</div></div>
+        <div class="stat"><div class="muted small">Beste Streak</div><div class="big" id="bestStreakStat">0</div></div>
+      </div>
+
+      <div class="grid three">
+        <div class="card stack">
+          <div class="section-title"><h3>Push-Ups eintragen</h3><span class="muted small">synct live</span></div>
+          <input id="pushupAmount" type="number" min="1" placeholder="Anzahl" />
+          <input id="pushupDate" type="date" />
+          <input id="pushupNote" maxlength="140" placeholder="Notiz (optional)" />
+          <button onclick="addPushups()">Speichern</button>
+        </div>
+        <div class="card stack">
+          <div class="section-title"><h3>Ziele</h3><span class="muted small">Woche / Monat / Jahr</span></div>
+          <input id="weeklyGoal" type="number" min="0" placeholder="Wöchentliches Ziel" />
+          <input id="monthlyGoal" type="number" min="0" placeholder="Monatliches Ziel" />
+          <input id="yearlyGoal" type="number" min="0" placeholder="Jährliches Ziel" />
+          <button onclick="saveGoals()">Ziele speichern</button>
+        </div>
+        <div class="card stack">
+          <div class="section-title"><h3>Team</h3><span class="muted small">privates Leaderboard</span></div>
+          <input id="teamName" placeholder="Teamname" />
+          <select id="visibility">
+            <option value="private">Privat</option>
+            <option value="public">Öffentlich</option>
+          </select>
+          <div class="toolbar">
+            <button class="secondary" onclick="saveTeam()">Team speichern</button>
+            <button class="secondary" onclick="downloadExport()">Excel</button>
+          </div>
+          <div class="toolbar">
+            <button class="ghost" onclick="enablePush()">Push aktivieren</button>
+            <button class="danger" onclick="logout()">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <div class="section-title"><h2>Mein Fortschritt</h2><span class="muted small">zielbasiert</span></div>
+          <div id="goalProgress" class="progress-wrap"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Privates Leaderboard</h2><span class="muted small">nur dein Team</span></div>
+          <div id="summaryBody" class="leader"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><h2>Live Team Feed</h2><span class="muted small">ohne Reload</span></div>
+        <div id="entriesBody" class="entries"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const authView = document.getElementById('authView');
+    const appView = document.getElementById('appView');
+    const userBadge = document.getElementById('userBadge');
+    const teamMeta = document.getElementById('teamMeta');
+    const syncMeta = document.getElementById('syncMeta');
+    const pushMeta = document.getElementById('pushMeta');
+    let socket;
+    let appConfig = { vapidPublicKey: '', googleEnabled: false };
+    let currentData = null;
+
+    async function api(url, options = {}) {
+      const res = await fetch(url, {
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options,
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        const data = contentType.includes('application/json') ? await res.json() : { error: 'Fehler' };
+        throw new Error(data.error || 'Fehler');
+      }
+      return contentType.includes('application/json') ? res.json() : res;
+    }
+
+    function setError(id, msg) { document.getElementById(id).textContent = msg || ''; }
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.t);
+      showToast.t = setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+    function sumFor(entries, fn) { return entries.filter(fn).reduce((a,b) => a + Number(b.amount || 0), 0); }
+
+    function progressRow(label, value, goal) {
+      const percent = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 0;
+      return `
+        <div class="progress-row">
+          <div class="progress-head"><strong>${label}</strong><span class="muted">${value} / ${goal || 0}</span></div>
+          <div class="progress"><div class="bar" style="width:${percent}%"></div></div>
+        </div>`;
+    }
+
+    function renderDashboard(data) {
+      currentData = data;
+      authView.classList.add('hidden');
+      appView.classList.remove('hidden');
+      userBadge.classList.remove('hidden');
+      userBadge.textContent = `${data.me.username} · ${data.me.provider}`;
+      teamMeta.textContent = `${data.team.teamName} · Code ${data.team.teamCode} · ${data.team.visibility}`;
+      syncMeta.textContent = socket && socket.connected ? 'Live Sync verbunden' : 'Live Sync getrennt';
+      document.getElementById('weeklyGoal').value = data.me.weeklyGoal;
+      document.getElementById('monthlyGoal').value = data.me.monthlyGoal;
+      document.getElementById('yearlyGoal').value = data.me.yearlyGoal;
+      document.getElementById('teamName').value = data.team.teamName;
+      document.getElementById('visibility').value = data.team.visibility;
+      document.getElementById('pushupDate').value = new Date().toISOString().slice(0, 10);
+
+      const meSummary = data.summary.find(x => x.id === data.me.id) || { weekly: 0, monthly: 0, yearly: 0, weeklyGoal: 0, monthlyGoal: 0, yearlyGoal: 0, streakCount: 0, bestStreak: 0 };
+      const today = new Date().toISOString().slice(0,10);
+      document.getElementById('todayStat').textContent = sumFor(data.entries, e => e.user_id === data.me.id && String(e.entry_date).slice(0,10) === today);
+      document.getElementById('weekStat').textContent = meSummary.weekly;
+      document.getElementById('streakStat').textContent = meSummary.streakCount;
+      document.getElementById('bestStreakStat').textContent = meSummary.bestStreak;
+
+      document.getElementById('goalProgress').innerHTML = [
+        progressRow('Woche', meSummary.weekly, meSummary.weeklyGoal),
+        progressRow('Monat', meSummary.monthly, meSummary.monthlyGoal),
+        progressRow('Jahr', meSummary.yearly, meSummary.yearlyGoal)
+      ].join('');
+
+      document.getElementById('summaryBody').innerHTML = data.summary.map((row, i) => `
+        <div class="leader-row">
+          <div class="rank">${i + 1}</div>
+          <div><strong>${row.username}</strong><div class="muted small">${row.streakCount} Tage Streak</div></div>
+          <div><strong>${row.weekly}</strong><div class="muted small hide-sm">Woche</div></div>
+          <div class="hide-sm"><strong>${row.monthly}</strong><div class="muted small">Monat</div></div>
+          <div class="hide-sm"><strong>${row.yearly}</strong><div class="muted small">Jahr</div></div>
+          <div class="hide-sm"><strong>${row.bestStreak}</strong><div class="muted small">Best</div></div>
+        </div>
+      `).join('');
+
+      document.getElementById('entriesBody').innerHTML = data.entries.map(row => `
+        <div class="entry">
+          <div><strong>${row.username}</strong><div class="muted small">${String(row.entry_date).slice(0,10)} ${row.note ? '· ' + row.note : ''}</div></div>
+          <div><strong>${row.amount}</strong><div class="muted small">Push-Ups</div></div>
+        </div>
+      `).join('');
+    }
+
+    async function registerUser() {
+      try {
+        setError('regError', '');
+        const username = document.getElementById('regUsername').value;
+        const password = document.getElementById('regPassword').value;
+        const teamCode = document.getElementById('regTeamCode').value;
+        const teamName = document.getElementById('regTeamName').value;
+        const data = await api('/api/register', { method: 'POST', body: JSON.stringify({ username, password, teamCode, teamName }) });
+        showToast('Registriert. Team-Code: ' + data.teamCode);
+        await loadDashboard();
+      } catch (e) { setError('regError', e.message); }
+    }
+
+    async function login() {
+      try {
+        setError('loginError', '');
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+        await api('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+        await loadDashboard();
+      } catch (e) { setError('loginError', e.message); }
+    }
+
+    async function logout() {
+      await api('/api/logout', { method: 'POST' });
+      if (socket) socket.disconnect();
+      userBadge.classList.add('hidden');
+      authView.classList.remove('hidden');
+      appView.classList.add('hidden');
+      teamMeta.textContent = 'Nicht eingeloggt';
+      syncMeta.textContent = 'Live Sync bereit';
+    }
+
+    async function saveGoals() {
+      const weeklyGoal = Number(document.getElementById('weeklyGoal').value || 0);
+      const monthlyGoal = Number(document.getElementById('monthlyGoal').value || 0);
+      const yearlyGoal = Number(document.getElementById('yearlyGoal').value || 0);
+      await api('/api/goals', { method: 'POST', body: JSON.stringify({ weeklyGoal, monthlyGoal, yearlyGoal }) });
+      showToast('Ziele gespeichert');
+    }
+
+    async function saveTeam() {
+      const teamName = document.getElementById('teamName').value;
+      const visibility = document.getElementById('visibility').value;
+      await api('/api/team', { method: 'POST', body: JSON.stringify({ teamName, visibility }) });
+      showToast('Team aktualisiert');
+    }
+
+    async function addPushups() {
+      const amount = Number(document.getElementById('pushupAmount').value || 0);
+      const entryDate = document.getElementById('pushupDate').value || new Date().toISOString().slice(0, 10);
+      const note = document.getElementById('pushupNote').value;
+      const data = await api('/api/pushups', { method: 'POST', body: JSON.stringify({ amount, entryDate, note }) });
+      document.getElementById('pushupAmount').value = '';
+      document.getElementById('pushupNote').value = '';
+      showToast(`Gespeichert · Streak ${data.streak.streakCount} Tage`);
+    }
+
+    function downloadExport() { window.location.href = '/api/export.xlsx'; }
+
+    function initSocket(teamCode) {
+      if (socket) socket.disconnect();
+      socket = io();
+      socket.on('connect', () => {
+        syncMeta.textContent = 'Live Sync verbunden';
+        socket.emit('team:join', teamCode);
+      });
+      socket.on('disconnect', () => syncMeta.textContent = 'Live Sync getrennt');
+      socket.on('dashboard:update', payload => {
+        renderDashboard(payload);
+        if (payload.toast) showToast(payload.toast);
+      });
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = atob(base64);
+      return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+    }
+
+    async function enablePush() {
+      try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('Push wird auf diesem Gerät nicht unterstützt.');
+        if (!appConfig.vapidPublicKey) throw new Error('VAPID ist auf dem Server noch nicht konfiguriert.');
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') throw new Error('Benachrichtigung nicht erlaubt.');
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(appConfig.vapidPublicKey)
+        });
+        await api('/api/push-subscribe', { method: 'POST', body: JSON.stringify({ subscription }) });
+        pushMeta.textContent = 'Push aktiv';
+        showToast('Push Notifications aktiviert');
+      } catch (e) {
+        showToast(e.message);
+      }
+    }
+
+    async function loadDashboard() {
+      const meRes = await api('/api/me');
+      appConfig = meRes.config || appConfig;
+      document.getElementById('googleBtn').classList.toggle('hidden', !appConfig.googleEnabled);
+      pushMeta.textContent = appConfig.vapidPublicKey ? 'Push verfügbar' : 'Push erfordert VAPID';
+      if (!meRes.user) {
+        authView.classList.remove('hidden');
+        appView.classList.add('hidden');
+        return;
+      }
+      const data = await api('/api/dashboard');
+      renderDashboard(data);
+      initSocket(data.team.teamCode);
+    }
+
+    loadDashboard().catch(() => {});
+  </script>
+</body>
+</html>
