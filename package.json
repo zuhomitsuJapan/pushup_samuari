@@ -1,0 +1,26 @@
+{
+  "name": "pushup-online-app-android",
+  "version": "2.1.0",
+  "description": "Push-up tracker with live sync, streaks, web push, Google/local login and private leaderboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.6.0",
+    "connect-pg-simple": "^10.0.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.11.5",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.0.5",
+    "web-push": "^3.6.7"
+  }
+}
